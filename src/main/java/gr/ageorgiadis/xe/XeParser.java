@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,7 +79,7 @@ public class XeParser {
 				.userAgent(USER_AGENT)
 				.get();
 		
-		Map<String, String> details = new HashMap<String, String>();
+		Map<String, Object> details = new HashMap<String, Object>();
 		
 		Element description = doc.select("p.d.d-google-banner").first();
 		
@@ -117,7 +118,7 @@ public class XeParser {
 		}
 	}
 	
-	private void handleKeyValue(String key, String value, Map<String, String> details) {
+	private void handleKeyValue(String key, Object value, Map<String, Object> details) {
 		if (keyMap.containsKey(key)) {
 			key = keyMap.get(key);
 		} else {
@@ -130,36 +131,37 @@ public class XeParser {
 		
 		if (Keys.isFullDate(key)) {
 			try {
-				value = parseFullDate(value);
+				value = parseFullDate((String) value);
 			} catch (ParseException e) {
 				LOGGER.warn("Could not parse full date: {}", value);
 			}
 		}
-		
+		else
 		if (Keys.isNumeric(key)) {
-			value = parseNumeric(value);
+			value = parseNumeric((String) value);
 		}
-		
-		if (value.matches(".*" + HITS_TRAILING)) {
-			value = value.replaceAll(HITS_TRAILING, "");
+		else
+		if (((String) value).matches(".*" + HITS_TRAILING)) {
+			value = Integer.valueOf(((String) value).replaceAll(HITS_TRAILING, ""));
 		}
-		
+		else
 		if (value.equals(TRUE_VALUE)) {
-			value = "true";
+			value = Boolean.TRUE;
 		}
+		else
 		if (value.equals(FALSE_VALUE)) {
-			value = "false";
+			value = Boolean.FALSE;
 		}
 		
 		details.put(key, value);
 	}
 	
-	private String parseFullDate(String fullDate) throws ParseException {
+	private Date parseFullDate(String fullDate) throws ParseException {
 		return XeDateHelper.formatDate(fullDate);
 	}
 	
-	private String parseNumeric(String numeric) {
-		return numeric.replaceAll("\\.", "");
+	private Integer parseNumeric(String numeric) {
+		return Integer.valueOf(numeric.replaceAll("\\.", ""));
 	}
 	
 }

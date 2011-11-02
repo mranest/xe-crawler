@@ -1,58 +1,52 @@
 package gr.ageorgiadis.xe;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import org.junit.Test;
+
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.Mongo;
 
 public class XeParserTest {
 
 	@Test
 	public void testXeParser() throws Exception {
-//		Mongo m = new Mongo();
-//		DB xedb = m.getDB("xedb");
-//		DBCollection ads = xedb.getCollection("ads");
+		Mongo m = new Mongo();
+		DB xedb = m.getDB("xedb");
+		DBCollection ads = xedb.getCollection("ads");
 		
 		XeParser parser = new XeParser();
 		
-		Map<String, Set<String>> keyValuesMap = new HashMap<String, Set<String>>();
-		
-		Set<String> keys = new HashSet<String>();
+//		Map<String, Set<String>> keyValuesMap = new HashMap<String, Set<String>>();
 		for (String each: parser.getAdUrls("/property/enoikiaseis|katoikies|attiki.html")) {
 			System.out.println(each);
 			XeSpec spec = parser.parse(each);
 			
-//			BasicDBObject ad = new BasicDBObject();
-//			ad.put("url", spec.getUrl());
-//			ad.put("description", spec.getDescription());
-//			
-//			BasicDBObject details = new BasicDBObject();
-//			details.putAll(spec.getDetails());
-//			ad.put("details", details);
-//			
-//			ads.insert(ad);
+			BasicDBObject ad = new BasicDBObject();
+			ad.put("url", spec.getUrl());
+			ad.put("description", spec.getDescription());
 			
-//			System.out.println("-- " + spec.getUrl());
-//			System.out.println(spec.getDescription());
-//			System.out.println(spec.getDetails());
-
-			for (Map.Entry<String, String> eachEntry: spec.getDetails().entrySet()) {
-				Set<String> values = keyValuesMap.containsKey(eachEntry.getKey()) ?
-						keyValuesMap.get(eachEntry.getKey()) :
-						new HashSet<String>();
-				values.add(eachEntry.getValue());
-				
-				keyValuesMap.put(eachEntry.getKey(), values);
-			}
+			BasicDBObject details = new BasicDBObject();
+			details.putAll(spec.getDetails());
+			ad.put("details", details);
+			
+			ads.insert(ad);
+			
+//			for (Map.Entry<String, String> eachEntry: spec.getDetails().entrySet()) {
+//				Set<String> values = keyValuesMap.containsKey(eachEntry.getKey()) ?
+//						keyValuesMap.get(eachEntry.getKey()) :
+//						new HashSet<String>();
+//				values.add(eachEntry.getValue());
+//				
+//				keyValuesMap.put(eachEntry.getKey(), values);
+//			}
 		}
 		
-		System.out.println();
-
-		for (Map.Entry<String, Set<String>> each: keyValuesMap.entrySet()) {
-			System.out.println(each.getKey() + " -> " + each.getValue());
-		}		
+//		System.out.println();
+//
+//		for (Map.Entry<String, Set<String>> each: keyValuesMap.entrySet()) {
+//			System.out.println(each.getKey() + " -> " + each.getValue());
+//		}		
 	}
 	
 	public void testSpec() throws Exception {

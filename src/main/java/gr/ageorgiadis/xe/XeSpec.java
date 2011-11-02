@@ -6,9 +6,9 @@ public class XeSpec {
 
 	private final String url;
 	private final String description;
-	private final Map<String, String> details;
+	private final Map<String, Object> details;
 
-	public XeSpec(String url, String description, Map<String, String> details) {
+	public XeSpec(String url, String description, Map<String, Object> details) {
 		this.url = url;
 		this.description = description;
 		this.details = details;
@@ -22,7 +22,7 @@ public class XeSpec {
 		return description;
 	}
 	
-	public Map<String, String> getDetails() {
+	public Map<String, Object> getDetails() {
 		return details;
 	}
 	

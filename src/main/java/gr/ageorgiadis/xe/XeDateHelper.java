@@ -4,6 +4,7 @@ import java.text.DateFormat;
 import java.text.DateFormatSymbols;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 
 public class XeDateHelper {
@@ -36,8 +37,9 @@ public class XeDateHelper {
 	private static final DateFormat OUT_FORMAT =
 			new SimpleDateFormat("yyyy-MM-dd");
 	
-	public static String formatDate(String date) throws ParseException {
-		return OUT_FORMAT.format(IN_FORMAT.parse(date));
+	public static Date formatDate(String date) throws ParseException {
+//		return OUT_FORMAT.format(IN_FORMAT.parse(date));
+		return IN_FORMAT.parse(date);
 	}
 	
 }

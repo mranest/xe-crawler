@@ -45,7 +45,8 @@ public class Keys extends ListResourceBundle {
 				{ "safetyDoorAvailable", "Πόρτα ασφαλείας" },
 				{ "view", "Θέα" },
 				{ "tents", "Τέντες" },
-				{ "configuration", "Διαμόρφωση Χώρων" }
+				{ "configuration", "Διαμόρφωση Χώρων" },
+				{ "pool", "Πισίνα" }
 		};
 	}
 
