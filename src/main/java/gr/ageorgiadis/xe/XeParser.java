@@ -2,21 +2,46 @@ package gr.ageorgiadis.xe;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class XeParser {
 
-	private final String BASE_URL = "http://www.xe.gr";
-	private final String SPEC_MODIFIER = "?mode=spec";
-	private final String PAGE_MODIFIER_FORMAT = "?page={0}";
+	private static final String USER_AGENT = 
+			"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/534.51.22 (KHTML, like Gecko) Version/5.1.1 Safari/534.51.22";
+	
+	private static final String BASE_URL = "http://www.xe.gr";
+	private static final String SPEC_MODIFIER = "?mode=spec";
+	private static final String PAGE_MODIFIER_FORMAT = "?page={0}";
+	
+	private static final String TRUE_VALUE = "Ναι";
+	private static final String FALSE_VALUE = "Όχι";
+	
+	private static final String HITS_TRAILING = " επισκέψεις"; 
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(XeParser.class);
+	
+	private final Map<String, String> keyMap;
+	
+	public XeParser() {
+		ResourceBundle keys = ResourceBundle.getBundle("gr.ageorgiadis.xe.Keys");
+		
+		keyMap = new HashMap<String, String>();
+		for (String each: keys.keySet()) {
+			keyMap.put(keys.getString(each), each);
+		}
+	}
 	
 	public List<String> getAdUrls(String path) throws IOException {
 		return getAdUrls(path, 1);
@@ -26,8 +51,9 @@ public class XeParser {
 		String pageModifier = page > 1 ? 
 				MessageFormat.format(PAGE_MODIFIER_FORMAT, page) :
 				"";
-		Document doc = Jsoup.connect(
-				BASE_URL + path + pageModifier).get();
+		Document doc = Jsoup.connect(BASE_URL + path + pageModifier)
+				.userAgent(USER_AGENT)
+				.get();
 		Elements adAnchors = doc.select("div.r_desc > h2 > a");
 		
 		List<String> adUrls = new ArrayList<String>();
@@ -48,7 +74,9 @@ public class XeParser {
 	}
 	
 	private XeSpec parseAd(String url) throws IOException {
-		Document doc = Jsoup.connect(url).get();
+		Document doc = Jsoup.connect(url)
+				.userAgent(USER_AGENT)
+				.get();
 		
 		Map<String, String> details = new HashMap<String, String>();
 		
@@ -56,10 +84,10 @@ public class XeParser {
 		
 		Element price = doc.select("div.d_price > h2").first();
 		{
-			String key = "Τιμή";
+			String key = Keys.PRICE_KEY;
 			String value = price != null ? price.text().substring(2) : null;
 			
-			details.put(key, value);
+			handleKeyValue(key, value, details);
 		}
 		
 		// Parse ad details
@@ -69,7 +97,7 @@ public class XeParser {
 			String key = each.select("th").text().replaceAll(":", "");
 			String value = each.select("td").text();
 
-			details.put(key, value);
+			handleKeyValue(key, value, details);
 		}
 
 		return new XeSpec(url, description.text(), details);
@@ -85,8 +113,53 @@ public class XeParser {
 			String key = each.select("th").text().replaceAll(":", "");
 			String value = each.select("td").text();
 
-			spec.getDetails().put(key, value);
+			handleKeyValue(key, value, spec.getDetails());
 		}
+	}
+	
+	private void handleKeyValue(String key, String value, Map<String, String> details) {
+		if (keyMap.containsKey(key)) {
+			key = keyMap.get(key);
+		} else {
+			LOGGER.warn("Missing mapping for key: [{}]", key);
+		}
+
+		if (Keys.isSkipped(key)) {
+			return;
+		}
+		
+		if (Keys.isFullDate(key)) {
+			try {
+				value = parseFullDate(value);
+			} catch (ParseException e) {
+				LOGGER.warn("Could not parse full date: {}", value);
+			}
+		}
+		
+		if (Keys.isNumeric(key)) {
+			value = parseNumeric(value);
+		}
+		
+		if (value.matches(".*" + HITS_TRAILING)) {
+			value = value.replaceAll(HITS_TRAILING, "");
+		}
+		
+		if (value.equals(TRUE_VALUE)) {
+			value = "true";
+		}
+		if (value.equals(FALSE_VALUE)) {
+			value = "false";
+		}
+		
+		details.put(key, value);
+	}
+	
+	private String parseFullDate(String fullDate) throws ParseException {
+		return XeDateHelper.formatDate(fullDate);
+	}
+	
+	private String parseNumeric(String numeric) {
+		return numeric.replaceAll("\\.", "");
 	}
 	
 }
